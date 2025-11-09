@@ -1,0 +1,37 @@
+on-demand instances
+
+Application migration service
+by adding source servers, we can replictae it as on-prem instances, then we can add it to ssm fleet manager
+
+AWS Migration hub
+we can collect the migration collector agents using apllication tools
+
+# Q8
+23f1001614@ds.study.iitm.ac.in
+EBS-snapshot
+lifecycle policy can schedule according to requiremenet by targating resources by tags 
+
+
+Auto-scaling
+Improved fault tolerance, availability, cost management
+
+
+Load Balancer
+It supports cross avilability zones
+Blue/Green deployment: add two target groups
+
+Lambda
+Schedule: Amazon event bridge
+
+
+Python (Boto3) scripts for the certain Lambda function events RDS EBS Snapshots attach and detach, Create & refresh API secret tokens, AMIs De-Registration.
+
+
+Lambda: Copy RDS Snapshot, Create Delete old Instances, RDS EBS Snapshots attach and detach, Create & refresh API secret tokens, AMIs De-Registration.
+
+
+CloudFormation, Terraform templates and deploy AWS resources: EC2, VPC, Cognito User Pool, LoadBalancer, RDS, ECS Farget.
+
+IPwhitelist
+pfsense/
+sophus(cyber)/forti- hardware
