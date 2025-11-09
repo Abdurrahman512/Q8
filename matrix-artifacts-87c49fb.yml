@@ -1,0 +1,121 @@
+name: Matrix Build with Artifacts (87c49fb)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build (${{ matrix.variant }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: 18
+            python: "3.10"
+            variant: ubuntu-node18-py310
+          - os: windows-latest
+            node: 20
+            python: "3.11"
+            variant: windows-node20-py311
+          - os: macos-latest
+            node: 22
+            python: "3.12"
+            variant: macos-node22-py312
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      # Required identifier step
+      - name: matrix-87c49fb
+        run: |
+          echo "Matrix variant: ${{ matrix.variant }}"
+          echo "OS: ${{ matrix.os }}, Node: ${{ matrix.node }}, Python: ${{ matrix.python }}"
+
+      - name: Build step (generate unique artifact)
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cat << 'JSON' > artifacts/${{ matrix.variant }}.json
+          {
+            "variant": "${{ matrix.variant }}",
+            "os": "${{ matrix.os }}",
+            "node": "${{ matrix.node }}",
+            "python": "${{ matrix.python }}",
+            "timestamp": "${{ github.run_id }}-${{ github.run_attempt }}"
+          }
+          JSON
+          echo "Created artifacts/${{ matrix.variant }}.json"
+          # Ensure the file is non-empty for validators:
+          test -s "artifacts/${{ matrix.variant }}.json"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-87c49fb-${{ matrix.variant }}
+          path: artifacts/${{ matrix.variant }}.json
+          if-no-files-found: error
+
+  validate:
+    name: Validate submission requirements
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "README.md is missing"; exit 1
+          fi
+          echo "README.md present."
+
+      - name: Ensure README contains an email address
+        run: |
+          if ! grep -Eqi '[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}' README.md; then
+            echo "No email address found in README.md"; exit 1
+          fi
+          echo "README contains an email."
+
+      - name: Download build artifacts with prefix build-87c49fb
+        uses: actions/download-artifact@v4
+        with:
+          pattern: build-87c49fb-*
+          merge-multiple: true
+          path: downloaded
+
+      - name: Verify at least 3 artifacts and all non-empty
+        run: |
+          set -euo pipefail
+          ls -l downloaded || true
+
+          # Count files (each matrix job uploaded a single file)
+          count=$(find downloaded -type f | wc -l | tr -d ' ')
+          echo "Found $count artifact file(s) in downloaded/"
+          if [ "$count" -lt 3 ]; then
+            echo "Expected at least 3 artifacts with prefix build-87c49fb-*"; exit 1
+          fi
+
+          # Ensure none are empty
+          if find downloaded -type f -size 0c | grep -q .; then
+            echo "One or more artifact files are empty"; exit 1
+          fi
+          echo "All artifacts are non-empty."
+
+      - name: Confirm matrix jobs succeeded (implicit via needs)
+        run: |
+          echo "All matrix jobs succeeded because this job (needs: build) is running."
